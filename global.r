@@ -1,8 +1,8 @@
 #################################################################
 ## Filename: global.r
-## Created: Oct 24, 2019
+## Created: March 13, 2020
 ## Author(s): Karsten Krug
-## Purpose: Shiny-app to visualize data from CPTAC LUAD discovery cohort
+## Purpose: Shiny-app to visualize data from CPTAC LUSC discovery cohort
 ## This file imports the underlying data and contains global functions
 ## and variables used by 'ui.R' and 'server.R'
 #################################################################
@@ -21,66 +21,61 @@ p_load(bcrypt)
 p_load(glue)
 
 ## import the data
-load('data/data-luad-v3.2-tumor-over-nat.RData')
+load('data/data-luad-v2.0-tumor-over-nat.RData')
 
 ## global parameters
 GENE.COLUMN <<- 'geneSymbol' 
 DATATYPE.COLUMN <<- 'DataType'
 
 GENEMAX <<- 20
-TITLESTRING <<- 'CPTAC LUAD discovery cohort'
-WINDOWTITLE <<- 'CPTAC-LUAD-2020'
+TITLESTRING <<- 'CPTAC LUSC discovery cohort'
+WINDOWTITLE <<- 'CPTAC-LUSC-2020'
 GAPSIZEROW <<- 20
-FILENAMESTRING <<- 'CPTAC-LUAD2020'
+FILENAMESTRING <<- 'CPTAC-LUSC2020'
 
 cellwidth <<- 8
 cellheight <<- 10
 
 ################################################
 ## 
-# GENESSTART <<- c('SPRR2D', 'DYSF', 'CD274',
-#                  'MUC5AC', 'CLDN18', 'ARHGEF6', 
-#                  'BPIFA1', 'FDX1', 'EML1', 
-#                  'PTK2', 'NCOA2', 'PTPN13')
-GENESSTART <<- c('TP53', 'ALK', 'EGFR', 'RB1', 'KRAS', 'STK11' )
+#GENESSTART <<- c('TP53', 'ALK', 'EGFR', 'RB1', 'KRAS', 'STK11' )
+GENESSTART <<- c('SLK', 'PIK3CA', 'PIK3CD', 'SOX2', 'TP63')
 
 ##########################################
 ## annotaion tracks shown in heatmap 
-anno.all <- rev(c('Multi.omic.subtype'='NMF.consensus', 
-                  'RNA.subtype.TCGA'='mRNA.Expression.Subtype.TCGA',
-                  'Tumor.Stage'='Stage',
-                  'Smoking.Score.WGS'='Smoking.Score.WGS',
-                  'TSNet.Purity'='TSNet.Purity',
-                  'ESTIMATE.ImmuneScore'='ESTIMATE.ImmuneScore',
-                  'CIMP.status'='CIMP.status',
-                  'TP53.mutation'='TP53.mutation.status',
-                  "KRAS.mutation"="KRAS.mutation.status" ,
-                  "EGFR.mutation"="EGFR.mutation.status",
-                  "STK11.mutation"="STK11.mutation.status",
-                  "ALK.fusion"="ALK.fusion"
+anno.all <- rev(c('Multi.omic.subtype'='NMF.cluster', 
+                  'RNA.subtype.TCGA'='Subtype.TCGA.rna',
+                 #'Tumor.Stage'='Stage',
+                  'Smoking.Score.WGS'='Smoking.score',
+                  'TSNet.Purity'='TSNet.Purity.rna',
+                  'ESTIMATE.ImmuneScore'='Estimate_ImmuneScore.rna',
+                  'Immune.cluster'='Immune.Cluster.rna',
+                  #'CIMP.status'='CIMP.status',
+                  'CDKN2A.mutation'='CDKN2A.mutation.status',
+                  "PTEN.mutation"="PTEN.mutation.status" ,
+                  "KEAP1.mutation"="KEAP1.mutation.status",
+                  "KRAS.mutation"="KRAS.mutation.status",
+                  "KMT2D.mutation"="KMT2D.mutation.status"
 ))
 
 ##############################
 ## color mappings for 'anno.all'
 column.anno.col <<- list(
-  Multi.omic.subtype=c(C1=rgb(142, 210, 198, maxColorValue = 255), 
-                       C2=rgb(250, 247, 182, maxColorValue = 255), 
-                       C3=rgb(190, 187, 219, maxColorValue = 255), 
-                       C4=rgb(244, 127, 114, maxColorValue = 255)),
-  RNA.subtype.TCGA=c( 'Proximal-proliferative'=rgb(130, 178, 212, maxColorValue = 255),
-                      'Proximal-inflammatory'=rgb(187, 129, 184, maxColorValue = 255),
-                      'Terminal Respiratory Unit'=rgb(252, 180, 98, maxColorValue = 255)),
-  CIMP.status=c('CIMP-1'=rgb(179, 205, 227, maxColorValue = 255),
-                'CIMP-2'=rgb(139, 150, 199, maxColorValue = 255),
-                'CIMP+'=rgb(136, 69, 153, maxColorValue = 255),
-                'NA'='white'
-  ),
-  Tumor.Stage=c('1'=blues9[1], '1A'=blues9[2], '1B'=blues9[3], '2A'=blues9[4], '2B'=blues9[5], '3'=blues9[6], '3A'=blues9[7]),
-  TP53.mutation=c('0'='white', '1'='black'),
+  Multi.omic.subtype=c(C1='yellow', 
+                       C2='red', 
+                       C3='#FCB462', 
+                       C4='#BB81B8',
+                       C5='#82B2D4'),
+  RNA.subtype.TCGA=c( 'basal'='red', 'classical'='#FCB462', 'secretory'='#BB81B8','primitive'='#82B2D4','unknown'='grey'),
+ 
+  #Tumor.Stage=c('I'=blues9[1], 'IA'=blues9[2], 'IB'=blues9[3], 'IIA'=blues9[4], 'IIB'=blues9[5], ''=blues9[6], '3A'=blues9[7]),
+  CDKN2A.mutation=c('0'='white', '1'='black'),
   KRAS.mutation=c('0'='white', '1'='black'),
-  EGFR.mutation=c('0'='white', '1'='black'),
-  STK11.mutation=c('0'='white', '1'='black'),
-  ALK.fusion=c('0'='white', '1'='darkblue'),
+  PTEN.mutation=c('0'='white', '1'='black'),
+  KEAP1.mutation=c('0'='white', '1'='black'),
+  KMT2D.mutation=c('0'='white', '1'='black'),
+  
+  Immune.cluster=c('Hot Tumor'='orange', 'Cold Tumor'='skyblue', 'NAT-enriched'='darkgreen'),
   
   Smoking.Score.WGS=circlize::colorRamp2( c(0, 0.5, 1), c('grey90', 'grey50','black')),
   
@@ -102,7 +97,7 @@ columns.to.sort <- rev(anno.all)
 ## 21060613 bcrypt
 authenticateUser <- function(passphrase){
   if(nchar(as.character(passphrase)) > 0){
-    return(checkpw(as.character(passphrase), "$2a$12$FsRUoFTKq/jGoxchdZTi7.MHHaaxGGxV2RSrLmikX15tCaaIyhjc2"))
+    return(checkpw(as.character(passphrase), "$2a$12$yJXCOp04vsk4SoUFpKHLauJ31qpOiiziFDbUVwyjU/uNJSPOgfY.G"))
   } else {
     return(FALSE)
   }
@@ -413,7 +408,10 @@ makeHM <- function(gene, filename=NA, expr=tab.expr.all,
     if(mode(column.anno.col[[anno.class]]) == 'function')
       column2sort  <- NULL
     
-    MyComplexHeatmap(expr.select.zscore, row.anno.select, column.anno.fig, column.anno.col, 
+    save(expr.select.zscore, row.anno.select, column.anno.fig, column.anno.col, 
+         max.val, column2sort, file='debug.RData')
+        
+    MyComplexHeatmap(data.matrix(expr.select.zscore), row.anno.select, column.anno.fig, column.anno.col, 
                      max.val=max.val, column2sort=column2sort
                      )
     
