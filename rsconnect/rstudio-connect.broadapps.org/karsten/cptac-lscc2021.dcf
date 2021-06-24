@@ -1,0 +1,12 @@
+name: cptac-lscc2021
+title: CPTAC-LSCC2021
+username: karsten
+account: karsten
+server: rstudio-connect.broadapps.org
+hostUrl: https://rstudio-connect.broadapps.org/__api__
+appId: 28
+bundleId: 54
+url: https://rstudio-connect.broadapps.org/content/28/
+when: 1620417960.99038
+asMultiple: FALSE
+asStatic: FALSE

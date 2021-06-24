@@ -21,70 +21,86 @@ p_load(bcrypt)
 p_load(glue)
 
 ## import the data
-load('data/data-luad-v2.0-tumor-over-nat.RData')
+load('data/data-lscc-v3.2-tumor-over-nat-ubK.RData')
 
 ## global parameters
 GENE.COLUMN <<- 'geneSymbol' 
 DATATYPE.COLUMN <<- 'DataType'
 
 GENEMAX <<- 20
-TITLESTRING <<- 'CPTAC LUSC discovery cohort'
-WINDOWTITLE <<- 'CPTAC-LUSC-2020'
+TITLESTRING <<- '<font size="5" face="times"><i><b>"A proteogenomic portrait of lung squamous cell carcinoma"</b></i> (<a href="https://twitter.com/shankha_ss" target="_blank_">Satpathy</a> <i>et al.</i> 2021. accepted in principle at Cell)</font><br>'
+TITLESTRING.HEATMAP <<- 'Suppl. data: "A proteogenomic portrait of lung squamous cell carcinoma", Satpathy et al. Cell. 2021 - accepted in principle'
+
+WINDOWTITLE <<- 'CPTAC-LSCC-2021'
 GAPSIZEROW <<- 20
-FILENAMESTRING <<- 'CPTAC-LUSC2020'
+FILENAMESTRING <<- 'CPTAC-LSCC2021'
 
 cellwidth <<- 8
 cellheight <<- 10
 
+## if TRUE, CNA data will not be z-scored
+## (for thresholded CNA values)
+exclude_cna_from_zscore <- FALSE
+
 ################################################
-## 
-#GENESSTART <<- c('TP53', 'ALK', 'EGFR', 'RB1', 'KRAS', 'STK11' )
-GENESSTART <<- c('SLK', 'PIK3CA', 'PIK3CD', 'SOX2', 'TP63')
+## list of gens shown at start
+GENESSTART <<- c('SLK', 'PIK3CA', 'PIK3CD', 'SOX2', 'TP63', 'VIM')
 
 ##########################################
-## annotaion tracks shown in heatmap 
+## annotation tracks shown in heatmap 
 anno.all <- rev(c('Multi.omic.subtype'='NMF.cluster', 
                   'RNA.subtype.TCGA'='Subtype.TCGA.rna',
-                 #'Tumor.Stage'='Stage',
-                  'Smoking.Score.WGS'='Smoking.score',
                   'TSNet.Purity'='TSNet.Purity.rna',
-                  'ESTIMATE.ImmuneScore'='Estimate_ImmuneScore.rna',
+                  'ESTIMATE.ImmuneScore'='ESTIMATE.ImmuneScore.rna',
+                  'ESTIMATE.StromalScore'='ESTIMATE.StromalScore.rna',
                   'Immune.cluster'='Immune.Cluster.rna',
-                  #'CIMP.status'='CIMP.status',
+                  'CIMP.status'='CIMP.status.meth',
                   'CDKN2A.mutation'='CDKN2A.mutation.status',
                   "PTEN.mutation"="PTEN.mutation.status" ,
-                  "KEAP1.mutation"="KEAP1.mutation.status",
-                  "KRAS.mutation"="KRAS.mutation.status",
-                  "KMT2D.mutation"="KMT2D.mutation.status"
+                  "KEAP1.mutation"="KEAP1.mutation.status", 
+                  "KMT2D.mutation"="KMT2D.mutation.status",
+                  'TMB.WXS'='Total.Mutation.Count.per.Mb.wxs'
 ))
 
 ##############################
 ## color mappings for 'anno.all'
 column.anno.col <<- list(
-  Multi.omic.subtype=c(C1='yellow', 
-                       C2='red', 
-                       C3='#FCB462', 
-                       C4='#BB81B8',
-                       C5='#82B2D4'),
-  RNA.subtype.TCGA=c( 'basal'='red', 'classical'='#FCB462', 'secretory'='#BB81B8','primitive'='#82B2D4','unknown'='grey'),
- 
-  #Tumor.Stage=c('I'=blues9[1], 'IA'=blues9[2], 'IB'=blues9[3], 'IIA'=blues9[4], 'IIB'=blues9[5], ''=blues9[6], '3A'=blues9[7]),
+  Multi.omic.subtype=c('EMT enriched'='yellow', 
+                       'Basal inclusive'='red', 
+                       'Classical'='#FCB462', 
+                       'Inflamed secretory'='#BB81B8',
+                       'Proliferative primitive'='#82B2D4'),
+  RNA.subtype.TCGA=c( 'Basal'='red', 
+                      'Classical'='#FCB462', 
+                      'Secretory'='#BB81B8',
+                      'Primitive'='#82B2D4',
+                      'Unknown'='grey'),
+  Immune.cluster=c('Hot Tumor'='orange', 
+                   'Cold Tumor'='skyblue', 
+                   'NAT-enriched'='darkgreen'),
+  CIMP.status=c('CIMP-high'='grey20',
+                'CIMP-intermediate'='grey50',
+                'CIMP-low'='grey80'
+                ),
+
   CDKN2A.mutation=c('0'='white', '1'='black'),
-  KRAS.mutation=c('0'='white', '1'='black'),
   PTEN.mutation=c('0'='white', '1'='black'),
   KEAP1.mutation=c('0'='white', '1'='black'),
   KMT2D.mutation=c('0'='white', '1'='black'),
   
-  Immune.cluster=c('Hot Tumor'='orange', 'Cold Tumor'='skyblue', 'NAT-enriched'='darkgreen'),
   
   Smoking.Score.WGS=circlize::colorRamp2( c(0, 0.5, 1), c('grey90', 'grey50','black')),
-  
   TSNet.Purity=circlize::colorRamp2( c(0, 0.5, 1), c('grey90', 'grey50','black')),
   ESTIMATE.ImmuneScore=circlize::colorRamp2( c(676, 4700, 6800), 
                                              c(rgb(255,245,240, maxColorValue = 255),  
                                                rgb(251,106,74, maxColorValue = 255),  
-                                               rgb(165,21,22, maxColorValue = 255)))
+                                               rgb(165,21,22, maxColorValue = 255))),
+  ESTIMATE.StromalScore=circlize::colorRamp2( c(-1388, 1854, 4157), 
+                                             c(rgb(255,245,240, maxColorValue = 255),  
+                                               rgb(251,106,74, maxColorValue = 255),  
+                                               rgb(165,21,22, maxColorValue = 255))),
   
+  TMB.WXS=circlize::colorRamp2( c(0.4, 9, 24), c('grey90', 'grey50','black'))
 )
 
 
@@ -106,7 +122,7 @@ authenticateUser <- function(passphrase){
 
 ###################################################################
 ## heatmap using ComplexHeatmap package
-MyComplexHeatmap <- function(m, rdesc, cdesc, cdesc.color, max.val, column2sort){
+MyComplexHeatmap <- function(m, rdesc, cdesc, cdesc.color, max.val, column2sort, main=''){
   
   if(is.null(max.val)){
     m.max <- ceiling(max(abs(m), na.rm=T))
@@ -115,7 +131,7 @@ MyComplexHeatmap <- function(m, rdesc, cdesc, cdesc.color, max.val, column2sort)
     m[m > m.max] <- m.max
     m[m < -m.max] <- -m.max
   }
-  
+  cdesc$TMB.WXS <- as.numeric(cdesc$TMB.WXS)
   
   ## #####################################
   ## colorscale for heatmap
@@ -123,18 +139,14 @@ MyComplexHeatmap <- function(m, rdesc, cdesc, cdesc.color, max.val, column2sort)
   
   #########################################
   ## annotations
- # View(cdesc)
-  cdesc.ha <- HeatmapAnnotation(df=cdesc, col=cdesc.color,
-                                
+  cdesc.ha <- HeatmapAnnotation(df=cdesc, 
+                                col=cdesc.color,
                                 show_legend = T, show_annotation_name = T, 
                                 annotation_name_side = 'left',
-                                na_col = "white",
-                                 annotation_legend_param=list(
-                                  direction='horizontal'#,
-                                 # vt_gap = unit(0.6, 'cm')
-                                  
-                                  #title_position = "leftcenter"
-                                )
+                               # na_col = "white",
+                                annotation_legend_param=list(
+                                  direction='horizontal'
+                                  )
   )
   ####################################
   ## heatmap
@@ -143,6 +155,8 @@ MyComplexHeatmap <- function(m, rdesc, cdesc, cdesc.color, max.val, column2sort)
   n.genes <- length(unique(rdesc$geneSymbol))
 
   cat('hm height:', dynamicHeightHM(n.entries, n.genes), '\n')
+
+  cat(column2sort,'\n')
   
   hm <- Heatmap(m, col=col.hm,
                 
@@ -153,17 +167,17 @@ MyComplexHeatmap <- function(m, rdesc, cdesc, cdesc.color, max.val, column2sort)
                 
                 row_split = rdesc$geneSymbol, 
                 row_title_rot=0,
-                column_split=column2sort,
+                #column_split=column2sort,
                 
                 name='relative abundance',
                 show_row_names = T,
                 show_column_names = F,
                 #use_raster = FALSE,
                 
-                height = unit(0.5 ,'cm') * n.entries
-                #heatmap_height = unit( dynamicHeightHM(n.entries, n.genes) ,'points')
-                #heatmap_height = unit( dynamicHeightHM(n.entries, n.genes)-50 ,'points')
-                  )
+                height = unit(0.5 ,'cm') * n.entries,
+                
+                column_title = main
+                )
   ## plot
   draw(hm, annotation_legend_side='bottom')
 }
@@ -176,12 +190,10 @@ extractGenes <- function(genes.char){
 
     gene.max=GENEMAX
 
-    #cat('TEST:',genes.char, '\n')
     if(is.null(genes.char))
       return(NULL)
-    #if( nchar(genes.char) == 0 ){
+
     if( length(genes.char) == 0 ){
-      
         return(NULL)
     }
     ## extract genes
@@ -207,10 +219,7 @@ extractGenes <- function(genes.char){
 ## depending on the number of genes
 dynamicHeightHM <- function(n.entries, n.genes){
   
-  #height = (n.entries+2)*11 + (n.genes-1)*GAPSIZEROW + 140
-  #height = (n.entries+4)*15 + (n.genes-1)*GAPSIZEROW + 200
-  
-  height <- 0.3937*n.entries + 0.7423 ## height in inch
+ height <- 0.3937*n.entries + 0.7423 ## height in inch
   #height <- 5*n.entries + 18.85
   height <- height + 12*0.3937 + 0.7423            ## add annotation tracks
   height <- height * 48             ## inch  to pixel
@@ -223,12 +232,17 @@ dynamicHeightHM <- function(n.entries, n.genes){
 #######################################################
 ## find all entries with associated gene name in
 ## the dataset. returns vector of indices.
-findGenesInDataset <- function(gene, show.sites){
+findGenesInDataset <- function(gene,                                 ## vector of gene symbols 
+                               show.sites=c('most variable', 'all')  
+                               ){
+  
+  show.sites <- match.arg(show.sites)
   
   ## remove spaces
   gene <- gsub(' ', '', gene )
   gene <- unique(gene)
-  ## remove emtpy strings
+  
+  ## remove empty strings
   gene.nchar=which(nchar(gene) == 0)
   if(length(gene.nchar) > 0)
     gene <- gene[-gene.nchar]
@@ -244,7 +258,7 @@ findGenesInDataset <- function(gene, show.sites){
   ## use row names
   gene.idx <- rownames(tab.expr.all)[gene.idx]
   
-  ## exract data and remove empty rows
+  ## extract data and remove empty rows
   data.tmp <- tab.expr.all[gene.idx, ]
   row.anno.tmp <- row.anno[gene.idx, ]
   
@@ -282,6 +296,22 @@ findGenesInDataset <- function(gene, show.sites){
       row.anno.tmp <- row.anno.tmp[gene.idx, ]
     }
     
+    ## extract MS ubiquityl
+    vm.idx <- grep('_ubK', row.anno.tmp[, DATATYPE.COLUMN])
+    if( length(vm.idx) > 0 ){
+      
+      vm.sd <- apply(data.tmp[ vm.idx, ], 1, sd, na.rm=T)
+      
+      rm.idx <- tapply(vm.sd, row.anno.tmp[vm.idx, GENE.COLUMN],  function(x) names(x)[which.max(x)])
+      rm.idx <- setdiff( names(vm.sd), unlist(rm.idx) )
+      
+      gene.idx <- setdiff(gene.idx, rm.idx)
+      
+      data.tmp <- data.tmp[gene.idx, ]
+      row.anno.tmp <- row.anno.tmp[gene.idx, ]
+    }
+    
+    
   }
 
   return(gene.idx)
@@ -295,10 +325,10 @@ findGenesInDataset <- function(gene, show.sites){
 makeHM <- function(gene, filename=NA, expr=tab.expr.all, 
                    column.anno=column.anno, row.anno=row.anno, zscore="none", 
                    anno.class='PAM50', sort.dir, 
-                   show.sites='all', min.val=-3, max.val=3, ...){
+                   show.sites='all', min.val=-3, max.val=3, 
+                   main='', ...){
 
     n.bins=12
-
 
     ## #############################
     
@@ -325,16 +355,18 @@ makeHM <- function(gene, filename=NA, expr=tab.expr.all,
     #####################################################
     ## labels for the rows in the heatmap
     featureIDs.anno.select <- paste(row.anno.select[ , 'geneSymbol'],
+                                gsub('6_ubK', 'ubK' ,    
                                     gsub( '5_acK', 'acK',
-                                    gsub( '4_pSTY', 'pSTY', 
+                                      gsub( '4_pSTY', 'pSTY', 
                                           gsub('3_Protein', 'Protein', 
                                                gsub('2_RNAseq', 'RNA-Seq', 
                                                     gsub('1_CNA', 'CNA', row.anno.select[ , 'DataType'])
                                                     ) 
                                                )
                                           )
+                                       )
                                     )
-                                    )
+                                  )
 
     #####################################################
     ## add phosphosite annotation
@@ -353,6 +385,12 @@ makeHM <- function(gene, filename=NA, expr=tab.expr.all,
                                                          featureIDs.anno.select[ ms.ack.idx ]), 
                                                      paste('ac', sub('.*_([K][0-9]*)[k].*', '\\1', row.anno.select[ ms.ack.idx, 'ID']), sep=''), sep='' )
     }
+    ms.ubk.idx <- grep('ubK', featureIDs.anno.select)
+    if(length(ms.ubk.idx)>0){
+      featureIDs.anno.select[ ms.ubk.idx ] <- paste( sub('ubK', '', 
+                                                         featureIDs.anno.select[ ms.ubk.idx ]), 
+                                                     paste('ub', sub('.*_([K][0-9]*)[k].*', '\\1', row.anno.select[ ms.ubk.idx, 'ID']), sep=''), sep='' )
+    }
     
     
     #################################
@@ -361,12 +399,19 @@ makeHM <- function(gene, filename=NA, expr=tab.expr.all,
 
     if(zscore == "row"){
       
-        ## exclude CNA data from Z-scoreing
+      if(exclude_cna_from_zscore){
+        ## exclude CNA data from Z-scoring
         expr.select.zscore.tmp <- lapply( rownames(expr.select), function(xx){x=expr.select[xx,];
             if( length(grep( 'CNA', xx)) == 0)return((x-mean(x, na.rm=T))/sd(x, na.rm=T));
             if( length(grep( 'CNA', xx)) > 0)return(x);
         })
-        expr.select.zscore <- matrix(unlist(expr.select.zscore.tmp), ncol=ncol(expr.select), byrow=T, dimnames=list(rownames(expr.select), colnames(expr.select)))
+       
+      } else {
+        expr.select.zscore.tmp <- apply(expr.select, 1, function(x)(x-mean(x, na.rm=T))/sd(x, na.rm=T))
+      }
+      
+      expr.select.zscore <- matrix(unlist(expr.select.zscore.tmp), ncol=ncol(expr.select), byrow=T, dimnames=list(rownames(expr.select), colnames(expr.select)))
+      
     } else {
         expr.select.zscore <- expr.select
     }
@@ -377,7 +422,6 @@ makeHM <- function(gene, filename=NA, expr=tab.expr.all,
 
     ##############################
     ## column annotation
-    #column.anno.fig <- column.anno[, c('PAM50', 'ER', 'PR', 'HER2')]
     column.anno.fig <- column.anno[, anno.all]
     colnames(column.anno.fig) <- names(anno.all)
 
@@ -405,30 +449,34 @@ makeHM <- function(gene, filename=NA, expr=tab.expr.all,
     ###############################
     ## heatmap
     column2sort <- column.anno[, anno.class]
-    if(mode(column.anno.col[[anno.class]]) == 'function')
-      column2sort  <- NULL
+    ## disable column split if sorting vector is numeric
+    if(mode(column.anno.col[[names(anno.class)]]) == 'function')
+      column2sort <- NULL
     
-    save(expr.select.zscore, row.anno.select, column.anno.fig, column.anno.col, 
-         max.val, column2sort, file='debug.RData')
+    save(expr.select.zscore, row.anno.select, column.anno.fig, column.anno.col,  featureIDs.anno.select, ms.ubk.idx,
+          max.val, column2sort, anno.class, file='debug.RData')
         
-    MyComplexHeatmap(data.matrix(expr.select.zscore), row.anno.select, column.anno.fig, column.anno.col, 
-                     max.val=max.val, column2sort=column2sort
+    MyComplexHeatmap(data.matrix(expr.select.zscore), 
+                     row.anno.select, column.anno.fig, column.anno.col, 
+                     max.val=max.val, column2sort=column2sort,
+                     main=main
                      )
     
 
     #########################################################################################
     ##
     ## - return part of table that is shown in the heatmap and that can be downloaded
-    ## - change the CNA values (-3, -1, 0, 1, 3) back to the orignial values (-1, -.3, 0, .3, 1)
+    ## - change the CNA values (-3, -1, 0, 1, 3) back to the original values (-1, -.3, 0, .3, 1)
     ##
     #########################################################################################
-    cna.idx <- grep('CNA', rownames(expr.select))
-    if(length(cna.idx) > 0){
-        expr.select[ cna.idx, ][expr.select[ cna.idx, ]  == -3 ] <- -1
-        expr.select[ cna.idx, ][expr.select[ cna.idx, ]  == -1 ] <- -.3
-        expr.select[ cna.idx, ][expr.select[ cna.idx, ]  == 1 ] <- .3
-        expr.select[ cna.idx, ][expr.select[ cna.idx, ]  == 3 ] <- 1
-    }
+    # cna.idx <- grep('CNA', rownames(expr.select))
+    # if(length(cna.idx) > 0){
+    #     expr.select[ cna.idx, ][expr.select[ cna.idx, ]  == -3 ] <- -1
+    #     expr.select[ cna.idx, ][expr.select[ cna.idx, ]  == -1 ] <- -.3
+    #     expr.select[ cna.idx, ][expr.select[ cna.idx, ]  == 1 ] <- .3
+    #     expr.select[ cna.idx, ][expr.select[ cna.idx, ]  == 3 ] <- 1
+    # }
+    # 
     ## add row annotation
     mat.row <- as.data.frame( cbind( row.anno[gene.idx, ], expr.select, deparse.level=0 ), stringsAsFactors=F )
     rownames(mat.row) <- make.names(featureIDs.anno.select, unique = T)

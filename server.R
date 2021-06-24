@@ -16,8 +16,8 @@ shinyServer( function(input, output, session) {
     global <- reactiveValues(
       zscore='row',
       sort.dir='ascending',
-      auth=F,
-      init=T,
+      auth=T,
+      init=F,
       all.genes=unique(row.anno[, GENE.COLUMN])
       
     )
@@ -29,7 +29,7 @@ shinyServer( function(input, output, session) {
       if(global$auth) return()
       list(
         passwordInput('passphrase',label='Enter password', width=120, placeholder = 'Password'),
-        actionButton('authbutton', 'GO', )
+        actionButton('authbutton', 'GO')
       )
     })
     
@@ -39,7 +39,14 @@ shinyServer( function(input, output, session) {
       global$auth <- authenticateUser(input$passphrase)
       global$init <- F
     })
- 
+
+    
+    ###############################
+    ## server-side selectize
+    observe({
+      updateSelectizeInput(session=session, 'genes', choices = global$all.genes, selected=GENESSTART, server=T)
+    })
+    
     ##############################
     ## ui
     ##############################
@@ -51,14 +58,16 @@ shinyServer( function(input, output, session) {
       list(
         ## text input
         selectizeInput('genes', label=paste('Enter your genes of interest (max. ', GENEMAX,')', sep=''), 
-                       choices=global$all.genes, selected=GENESSTART, multiple=T),
+                       #choices=global$all.genes,
+                       choices=NULL, 
+                       selected=GENESSTART, multiple=T ),
         
         HTML('<br><br>'),
 
         fluidRow(
           column(3, radioButtons('zscore', label='Z-score', choices=c('row', 'none'), selected='row')),
          # column(3),
-          column(3, radioButtons('allsites', label='phospho/acetyl sites', choices=c('most variable', 'all'), selected='most variable')),
+          column(3, radioButtons('allsites', label='PTM sites', choices=c('most variable', 'all'), selected='most variable')),
           column(3, textInput('min.val', label='min', value=-2, width='80%')),
           column(3, textInput('max.val', label='max', value=2, width='80%'))
         ),
@@ -83,18 +92,16 @@ shinyServer( function(input, output, session) {
         helpText(glue("Enter your gene names of interest (official gene symbols, e.g. {GENESSTART[sample(1:length(GENESSTART), 1)]}) into the text field. You can enter up to 20 genes.")),
         HTML('<p><b>Dataset</b></p>'),
         HTML('<p>Copy number aberrations are relative to matching normal blood sample and are on log2(CNA)-1 scale. For other data types the heatmap depicts abundances observed in tumor relative to normal adjacent tissue (NAT).</p>'),
-        HTML(glue( "<table border-spacing:5px><tr><th>Type</th><th># features</th><th># samples</th></tr>\n
-                   <tr><td>CNA</td><td>{sum(grepl('_CNA', row.anno$DataType))}</td><td>{ncol(tab.expr.all)}</td></tr>\n
-                   <tr><td>mRNA</td><td>{sum(grepl('_RNAseq', row.anno$DataType))}</td><td>{ncol(tab.expr.all)}</td></tr>\n
-                   <tr><td>Protein</td><td>{sum(grepl('_Protein', row.anno$DataType))}</td><td>{ncol(tab.expr.all)}</td></tr>\n
-                   <tr><td>phosphosites </td><td>{sum(grepl('_pSTY', row.anno$DataType))}</td><td>{ncol(tab.expr.all)}</td></tr>\n
-                   <tr><td>acetylsites</td><td>{sum(grepl('_acK', row.anno$DataType))}</td><td>{ncol(tab.expr.all)}</td></tr>\n
+        HTML(glue( "<table border-spacing:5px><tr><th>Type</th><th># features</th><th># T/N pairs</th></tr>\n
+                   <tr><td>CNA</td><td>{sum(grepl('_CNA', row.anno$DataType))}</td><td>{gct.N.samp[grep('_CNA', names(gct.N.samp))]}</td></tr>\n
+                   <tr><td>mRNA</td><td>{sum(grepl('_RNAseq', row.anno$DataType))}</td><td>{gct.N.samp[grep('_RNAseq', names(gct.N.samp))]}</td></tr>\n
+                   <tr><td>Protein</td><td>{sum(grepl('_Protein', row.anno$DataType))}</td><td>{gct.N.samp[grep('_Protein', names(gct.N.samp))]}</td></tr>\n
+                   <tr><td>phosphosites </td><td>{sum(grepl('_pSTY', row.anno$DataType))}</td><td>{gct.N.samp[grep('_pSTY', names(gct.N.samp))]}</td></tr>\n
+                   <tr><td>acetylsites</td><td>{sum(grepl('_acK', row.anno$DataType))}</td><td>{gct.N.samp[grep('_acK', names(gct.N.samp))]}</td></tr>\n
+                   <tr><td>ubiquitylsites</td><td>{sum(grepl('_ubK', row.anno$DataType))}</td><td>{gct.N.samp[grep('_ubK', names(gct.N.samp))]}</td></tr>\n
                    </table>"))
         
         #HTML('<p>For more details please see our publication <a href="http://cancerres.aacrjournals.org/content/78/10/2732" target="_blank_">Mundt <i>et al.</i> Cancer Research. 2018</a></p>')
-        
-        #HTML('<p>For more details please see our publication <a href="http://cancerres.aacrjournals.org/content/78/10/2732" target="_blank_">Mundt <i>et al.</i> Cancer Research. 2018</a></p>')
-        
         )
     })
     
@@ -126,7 +133,7 @@ shinyServer( function(input, output, session) {
       genes.vec <- extractGenes( input$genes )
       
       if(length(genes.vec)==0) return()
-      
+ 
      hm=makeHM(genes.vec, expr=tab.expr.all, column.anno=column.anno, 
                row.anno=row.anno, zscore=input$zscore, show.sites=input$allsites, 
                min.val=as.numeric(input$min.val), 
@@ -153,7 +160,9 @@ shinyServer( function(input, output, session) {
           #pdf(file, width=20, height=1.5*length(genes.vec))
           pdf(file, width=1400/72, height=dynamicHeightHM(length( findGenesInDataset(extractGenes( input$genes ), input$allsites) ), 
                                                           length(genes.vec))/72 )
-          hm=try(makeHM(genes.vec, expr=tab.expr.all, column.anno=column.anno, row.anno=row.anno, zscore=input$zscore, show.sites=input$allsites, min.val=as.numeric(input$min.val), max.val=as.numeric(input$max.val),anno.class=columns.to.sort[input$sort.after], sort.dir=global$sort.dir, filename = file))
+          hm=try(makeHM(genes.vec, expr=tab.expr.all, column.anno=column.anno, row.anno=row.anno, zscore=input$zscore, 
+                        show.sites=input$allsites, min.val=as.numeric(input$min.val), max.val=as.numeric(input$max.val), 
+                        anno.class=columns.to.sort[input$sort.after], sort.dir=global$sort.dir, filename = file, main = TITLESTRING.HEATMAP))
           dev.off()
           }
      )      
