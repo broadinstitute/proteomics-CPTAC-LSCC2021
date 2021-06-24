@@ -2,26 +2,26 @@
 ## Filename: global.r
 ## Created: March 13, 2020
 ## Author(s): Karsten Krug
-## Purpose: Shiny-app to visualize data from CPTAC LUSC discovery cohort
+## Purpose: Shiny-app to visualize data from CPTAC LSCC discovery cohort
 ## This file imports the underlying data and contains global functions
 ## and variables used by 'ui.R' and 'server.R'
 #################################################################
-library(pacman)
-p_load(BiocManager)
-p_load(scales)
-p_load(gtable)
-p_load(ComplexHeatmap)
-p_load(RColorBrewer)
-p_load(circlize)
-p_load(RColorBrewer)
-p_load(gplots)
-p_load(WriteXLS)
-p_load(grid)
-p_load(bcrypt)
-p_load(glue)
+#library(pacman)
+library(BiocManager)
+library(scales)
+library(gtable)
+library(ComplexHeatmap)
+library(RColorBrewer)
+library(circlize)
+library(RColorBrewer)
+library(gplots)
+library(WriteXLS)
+library(grid)
+library(bcrypt)
+library(glue)
 
 ## import the data
-load('data/data-lscc-v3.2-tumor-over-nat-ubK.RData')
+load('data/data-lscc-v3.3-public-tumor-over-nat.RData')
 
 ## global parameters
 GENE.COLUMN <<- 'geneSymbol' 
@@ -31,7 +31,7 @@ GENEMAX <<- 20
 TITLESTRING <<- '<font size="5" face="times"><i><b>"A proteogenomic portrait of lung squamous cell carcinoma"</b></i> (<a href="https://twitter.com/shankha_ss" target="_blank_">Satpathy</a> <i>et al.</i> 2021. accepted in principle at Cell)</font><br>'
 TITLESTRING.HEATMAP <<- 'Suppl. data: "A proteogenomic portrait of lung squamous cell carcinoma", Satpathy et al. Cell. 2021 - accepted in principle'
 
-WINDOWTITLE <<- 'CPTAC-LSCC-2021'
+WINDOWTITLE <<- 'CPTAC-LSCC2021'
 GAPSIZEROW <<- 20
 FILENAMESTRING <<- 'CPTAC-LSCC2021'
 
@@ -75,7 +75,8 @@ column.anno.col <<- list(
                       'Secretory'='#BB81B8',
                       'Primitive'='#82B2D4',
                       'Unknown'='grey'),
-  Immune.cluster=c('Hot Tumor'='orange', 
+  Immune.cluster=c('Hot Tumor'='red2', 
+                   'Warm Tumor'='orange',
                    'Cold Tumor'='skyblue', 
                    'NAT-enriched'='darkgreen'),
   CIMP.status=c('CIMP-high'='grey20',
@@ -167,7 +168,7 @@ MyComplexHeatmap <- function(m, rdesc, cdesc, cdesc.color, max.val, column2sort,
                 
                 row_split = rdesc$geneSymbol, 
                 row_title_rot=0,
-                #column_split=column2sort,
+                column_split=column2sort,
                 
                 name='relative abundance',
                 show_row_names = T,
@@ -453,8 +454,8 @@ makeHM <- function(gene, filename=NA, expr=tab.expr.all,
     if(mode(column.anno.col[[names(anno.class)]]) == 'function')
       column2sort <- NULL
     
-    save(expr.select.zscore, row.anno.select, column.anno.fig, column.anno.col,  featureIDs.anno.select, ms.ubk.idx,
-          max.val, column2sort, anno.class, file='debug.RData')
+    #save(expr.select.zscore, row.anno.select, column.anno.fig, column.anno.col,  featureIDs.anno.select, ms.ubk.idx,
+    #      max.val, column2sort, anno.class, file='debug.RData')
         
     MyComplexHeatmap(data.matrix(expr.select.zscore), 
                      row.anno.select, column.anno.fig, column.anno.col, 

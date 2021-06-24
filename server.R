@@ -1,8 +1,8 @@
 ###########################################################################
 ## Filename: server.R
-## Created: Oct 24, 2019
+## Created: March 13, 2020
 ## Author(s): Karsten Krug
-## Purpose: Shiny-app to visualize data from CPTAC LUAD discovery cohort
+## Purpose: Shiny-app to visualize data from CPTAC LSCC discovery cohort
 ## This defines the server logic of the Shiny-app.
 ##########################################################################
 library(shiny)
@@ -66,7 +66,7 @@ shinyServer( function(input, output, session) {
 
         fluidRow(
           column(3, radioButtons('zscore', label='Z-score', choices=c('row', 'none'), selected='row')),
-         # column(3),
+
           column(3, radioButtons('allsites', label='PTM sites', choices=c('most variable', 'all'), selected='most variable')),
           column(3, textInput('min.val', label='min', value=-2, width='80%')),
           column(3, textInput('max.val', label='max', value=2, width='80%'))
@@ -74,9 +74,7 @@ shinyServer( function(input, output, session) {
         fluidRow(
             column(12, selectizeInput('sort.after', 'Sort by', 
                                      choices=names(columns.to.sort), 
-                                     selected=names(columns.to.sort)[1], multiple=FALSE))#,
-            #column(6, radioButtons('sort.dir', '', choices=c('ascending', 'descending'), selected='ascending'))
-            
+                                     selected=names(columns.to.sort)[1], multiple=FALSE))          
         ),
           
         HTML('<br><br>'),
@@ -156,8 +154,7 @@ shinyServer( function(input, output, session) {
         content = function(file){
           genes.vec <- extractGenes( input$genes )
           if(length(genes.vec)==0) return()
-          #debug(makeHM)
-          #pdf(file, width=20, height=1.5*length(genes.vec))
+
           pdf(file, width=1400/72, height=dynamicHeightHM(length( findGenesInDataset(extractGenes( input$genes ), input$allsites) ), 
                                                           length(genes.vec))/72 )
           hm=try(makeHM(genes.vec, expr=tab.expr.all, column.anno=column.anno, row.anno=row.anno, zscore=input$zscore, 

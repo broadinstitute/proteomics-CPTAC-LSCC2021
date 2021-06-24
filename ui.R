@@ -1,9 +1,8 @@
 #################################################################
 ## Filename: ui.R
-## Created: April 3, 2019
+## Created: March 13, 2020
 ## Author(s): Karsten Krug
-## Purpose: Shiny-app to visualize data from CPTAC2.0 prospective Breast
-##          Cancer cohort
+## Purpose: Shiny-app to visualize data from CPTAC LSCC discovery cohort
 ## This file defines the user interface of the Shiny-app.
 #################################################################
 library(shiny)
