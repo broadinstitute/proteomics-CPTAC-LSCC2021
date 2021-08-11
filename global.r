@@ -6,11 +6,12 @@
 ## This file imports the underlying data and contains global functions
 ## and variables used by 'ui.R' and 'server.R'
 #################################################################
-#library(pacman)
+library(pacman)
 library(BiocManager)
 library(scales)
 library(gtable)
-library(ComplexHeatmap)
+#library(ComplexHeatmap)
+p_load(ComplexHeatmap)
 library(RColorBrewer)
 library(circlize)
 library(RColorBrewer)
@@ -28,8 +29,8 @@ GENE.COLUMN <<- 'geneSymbol'
 DATATYPE.COLUMN <<- 'DataType'
 
 GENEMAX <<- 20
-TITLESTRING <<- '<font size="5" face="times"><i><b>"A proteogenomic portrait of lung squamous cell carcinoma"</b></i> (<a href="https://twitter.com/shankha_ss" target="_blank_">Satpathy</a> <i>et al.</i> 2021. accepted in principle at Cell)</font><br>'
-TITLESTRING.HEATMAP <<- 'Suppl. data: "A proteogenomic portrait of lung squamous cell carcinoma", Satpathy et al. Cell. 2021 - accepted in principle'
+TITLESTRING <<- '<font size="5" face="times"><i><b>"A proteogenomic portrait of lung squamous cell carcinoma"</b></i> (<a href="https://www.cell.com/cell/fulltext/S0092-8674(21)00857-6" target="_blank_">Satpathy <i>et al.</i> 2021. Cell</a>)</font><br>'
+TITLESTRING.HEATMAP <<- 'Suppl. data: "A proteogenomic portrait of lung squamous cell carcinoma", Satpathy et al. Cell. 2021'
 
 WINDOWTITLE <<- 'CPTAC-LSCC2021'
 GAPSIZEROW <<- 20
